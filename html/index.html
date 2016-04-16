@@ -1,0 +1,74 @@
+<html>
+    <body>
+        <button type='button' id='authenticate' onClick='authPage()'>Authenticate</button>
+
+        <br />
+        <br />
+
+        <button type='button' id='activities' onClick='getActivities()'>Get Athlete Activities</button>
+
+        <br />
+        <div id='activities_list'></div>
+        <br />
+
+        <button type='button' id='segments' onClick='getSegments()'>Get Activity Segments</button>
+
+        <br />
+        <div id='segments_list'></div>
+        <br />
+
+        <button type='button' id='leaderboard' onClick='leaderboard()'>Get Segment Leaderboard</button>
+        
+        <br />
+        <div id='segment_leaderboard'></div>
+        <br />
+    </body>
+
+    <script>
+        var BASE_URL = 'http://cjohnson.ignorelist.com';
+        var METHOD = 'GET'
+;
+        function xmlhttp (url, method, callback) {
+            var hxr = new XMLHttpRequest();
+            xhr.open(method, url);
+            xhr.onload = function () {
+                if (xhr.status === 200) {
+                    callback(xhr.responseText)
+                } else {
+                    console.log('error on XHR call: ', xhr.status);
+                }
+            }
+        }
+
+        function authPage () {
+            var url = BASE_URL + '/auth';
+            
+            xmlhttp(url, METHOD, function (response) {
+                var authUrl = response;
+                authWindow = window.open(authUrl, 'authenticate');
+                setInterval(function () {
+                    if (authWindow.location.pathname === '/callback') {
+                        authWindow.close();
+                    }
+                }, 100);
+            });
+        }
+
+        function getActivities () {
+            var url = BASE_URL + '/activities';
+
+            xmlhttp(url, METHOD, function () {
+                 
+            });
+        }
+
+        function getSegments() {
+            
+        }
+
+        function leaderboard() {
+            
+        }
+
+    </script>
+</html>
