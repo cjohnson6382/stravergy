@@ -5,7 +5,7 @@ var async = require('async');
 var express = require('express');
 var multer = require('multer');
 var bodyParser = require('body-parser');
-var http = require('http');
+var https = require('https');
 
 var google = require('googleapis');
 var strava = require('strava-v3');
@@ -47,9 +47,13 @@ strava.<api endpoint>.<api endpoint option>(args,callback)
 //  OAuth
 async.waterfall([
     function (callback) {
-        fs.readfile('./data/strava_config', function (err, payload) {
+        fs.readFile('data/strava_config', function (err, payload) {
+            console.log('strava_config file after opening: '
+                , JSON.parse(payload.toString('utf8')).client_id);
             if (err === null) {
-                callback(null, JSON.parse(payload));
+                //  the JSON is getting all the way to the server starting clause
+                //      and its being interpreted as an err!
+                callback(null, JSON.parse(payload.toString('utf8'))); 
             } else {
                 console.log('error opening credentials file: ', err);
                 return;
@@ -59,7 +63,7 @@ async.waterfall([
 //  Routes
     function (credentials, callback) {
         app.get('/', function (req, res) {
-            fs.readFile('index.html', function (err, content) {
+            fs.readFile('html/index.html', function (err, content) {
                 if (err === null) {
                     res.writeHead(200, {'Content-Type': 'text/html'});
                     res.end(content);
@@ -68,27 +72,26 @@ async.waterfall([
                 }
             });
         });
-        app.get('/auth', upload.single(), function (req, res) {
+        app.get('/auth', function (req, res) {
+            //  console.log('auth called');
+            console.log('credentials retrieved from file: ', credentials, '\ncallback: ', credentials.redirect_uri);
             res.writeHead(200, {'Access-Control-Allow-Origin': '*'});
-            strava.oauth.getRequestAccessURL({
+
+            var url = strava.oauth.getRequestAccessURL({
                 client_id: credentials.client_id, 
                 redirect_uri: credentials.redirect_uri, 
                 scope: stravaScopes,
                 response_type: 'code' 
-            }, function (err, payload) {
-                if (err === null) {
-                    console.log('response to getRequestAccessURL: ', payload);
-                    res.end(payload);
-                } else { 
-                    console.log('error fetching access URL in auth: ', err)
-                }
-            });
+            })
+            res.end(url);
         });
         app.get('/callback', function (req, res) {
-            strava.oauth.getToken(req.code, function (err, payload) {
+            console.log('in callback: ', req.query.code);
+            strava.oauth.getToken(req.query.code, function (err, payload) {
                 if (err === null) {
                     console.log('access token payload: ', payload);
                     access_token = payload.access_token;
+                    res.end('authentication successful!');
                     //  storeToken(access_token, );
                 } else {
                     console.log('error getting token: ', err);          
@@ -100,63 +103,84 @@ async.waterfall([
                 if (err === null) {
                     console.log('athlete ID: ', payload.id);
                     athelete_id = payload.id;
-                    res.end(payload);
+                    res.end(JSON.stringify(payload));
                 } else {
                     console.log('error getting athlete: ', err);
                 }
             });
         });
         app.get('/activity', function (req, res) {
-            //  this is not what I want; I want to list activities --
-                //  need to go through the actual REST API to do this
-                //  b/c not implemented in the javascript
+                //  listActivities is not yet implemented in the default nodejs client 
             strava.activities.listActivities({ access_token: access_token }, function (err, payload) {
                 if (err === null) {
-                    console.log('activities list: ', payload);
-                    res.end(payload);
+                    console.log('activities list: ', payload.length);
+                    res.end(JSON.stringify(payload));
                 } else {
                     console.log('error getting activities', err);
                 }
             });
         });
-        app.get('/segment', upload.single(), function (req, res) {
-            strava.segments.get({ access_token: access_token,  id: req.body.segmentid }, function (err, payload) {
+        app.get('/segments', function (req, res) {
+            console.log('activityid in /segment before API call: ', req.query.activityid);
+            strava.activities.get({ access_token: access_token,  id: req.query.activityid }, function (err, payload) {
                 if (err === null) {
-                    console.log('segment payload: ', payload);
-                    res.end(payload);
+                    //  console.log('segment payload: ', payload.segment_efforts);
+                    res.end(JSON.stringify(payload));
                 } else {
-                    console.log('error retrieving segment: ', err);
+                    console.log('error retrieving segments for activity: ', err, '  ', req.query.activityid);
                 }
             });
         });
-        app.get('/leaderboard', upload.single(), function (req, res) {
-            strava.segments.listLeaderboard({ access_token: access_token, id: req.body.segmentid }, function (err, payload) {               
-                if (err === null) {
-                    console.log('payload for listLeaderboard: ', payload);
-                    //  leaderboard calls only get parts of the leaderboard;
-                        //  will need to get the first part of the leaderboard to determine total people on it
-                        //  then loop through the leaderboard..... this is gonna get ugly, fast
-                        //      if the segment has 7k attempts, and you only get 10%, you're still making 70 api calls
+        app.get('/leaderboard', function (req, res) {
+            var segmentid = parseInt(req.query.segmentid, 10);
 
-                    //  looks like you may be able to get the entire leaderboard in one call?
+            strava.segments.listLeaderboard({ access_token: access_token, id: segmentid, per_page: 200 }, function (err, payload) {
+                if (err === null) {
+                    //  console.log('payload for listLeaderboard: ', payload.entries);
+                    //  leaderboard calls only get parts of the leaderboard
                     var total_entries = payload.entry_count;
-                    strava.segments.listLeaderboard({ access_token: access_token, id: req.body.segmentid, per_page: total_entries }, function (err, payload) {
-                        if (err === null) {
-                            console.log('payload for FULL leaderboard: ', payload);
-                        } else {
-                            console.log('error retrieving full loaderboard: ', err);
-                        }
-                    });
-                } else {
-                    console.log('error while fetching leaderboard for segment: ', req.body.segmentid, ' error: ', err);
+                    var pages = Math.ceil(total_entries/200);
+                    var leaderboard_entries = payload.entries;
+                    var count = 1;
+                    console.log('total pages: ', pages);
+                    //  leaderboard calls are returning the 'context' stuff -- 2 above and 2 below me, as well as my rank
+                    for (var i = 1; i < pages; i++) {
+                        strava.segments.listLeaderboard({ access_token: access_token, id: segmentid, per_page: 200, page: i }, function (err, payload) {
+                            if (err === null) {
+                                console.log('leaderboard in for loop: ', leaderboard_entries[0].athlete_name, ' ', leaderboard_entries[0].rank, '\npayload: ', payload.entries[0].athlete_name, ' ', payload.entries[0].rank);
+                                //  console.log('payload for leaderboard page: ', payload.entries[0]);
+                                leaderboard_entries = leaderboard_entries.concat(payload.entries);
+                                count++;
+                                console.log('count/pages: ', count, pages);
+                                if (count === pages) {
+                                    done(leaderboard_entries);
+                                }
+                            } else {
+                                console.log('error retrieving full loaderboard: ', err);
+                            }
+                        });
+                    }
+
+                    function done (entries) {
+                        console.log('leaderboard_entries length before end: ', leaderboard_entries.length);
+                        //  console.log('instance of leaderboard entry: ', leaderboard_entries[0]);
+                        res.end(JSON.stringify(entries));
+                    }
+               } else {
+                    console.log('error while fetching leaderboard for segment: ', req.query.segmentid, ' error: ', err);
                 }
             });
         });
+        callback();
     }
 ], function (err, results) {
     if (err === null) {
-        http.createServer(app).listen(80, function () {
-            console.log('starting the server in standard HTTP mode');
+        var options = {
+            key: fs.readFileSync('ssl/key.pem'),
+            cert: fs.readFileSync('ssl/cert.pem')
+        };
+        https.createServer(options, app).listen(443, function () {
+            console.log('starting the server in HTTPS mode');
         });
     } else {
         console.log('error starting the server: ', err);

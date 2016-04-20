@@ -1,7 +1,7 @@
 
 {
-    "access_token"    : 'c01a3bcb662f0d669946ec4442e7ba3a4eba6959'
+    "access_token"    : "c01a3bcb662f0d669946ec4442e7ba3a4eba6959"
     , "client_id"     : 1030
-    , "client_secret" : '7bb84b200aaf548c9ce0acc1516f61ff970831cb'
-    , "redirect_uri"  : 'cjohnson.ignorelist.com/stravegy'
+    , "client_secret" : "7bb84b200aaf548c9ce0acc1516f61ff970831cb"
+    , "redirect_uri"  : "https://cjohnson.ignorelist.com:4343/callback"
 }

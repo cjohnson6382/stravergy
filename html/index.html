@@ -1,4 +1,11 @@
 <html>
+    <head>
+        <style>
+            li:hover {
+                background-color: yellow
+            }
+        </style>
+    </head>
     <body>
         <button type='button' id='authenticate' onClick='authPage()'>Authenticate</button>
 
@@ -11,25 +18,38 @@
         <div id='activities_list'></div>
         <br />
 
-        <button type='button' id='segments' onClick='getSegments()'>Get Activity Segments</button>
-
         <br />
+        <div>Segments List: </div><div id='activity_title'></div>
         <div id='segments_list'></div>
         <br />
 
-        <button type='button' id='leaderboard' onClick='leaderboard()'>Get Segment Leaderboard</button>
+<!--        <button type='button' id='leaderboard' onClick='leaderboard()'>Get Segment Leaderboard</button> -->
         
         <br />
+        <div>Leaderboard: </div><div id='segment_title'></div>
         <div id='segment_leaderboard'></div>
         <br />
     </body>
 
     <script>
-        var BASE_URL = 'http://cjohnson.ignorelist.com';
-        var METHOD = 'GET'
-;
-        function xmlhttp (url, method, callback) {
-            var hxr = new XMLHttpRequest();
+
+        //  consts for DOM elements
+        var ACTIVITIES_LIST = document.getElementById('activities_list');
+        var SEGMENTS_LIST = document.getElementById('segments_list');
+        var LEADERBOARD = document.getElementById('segment_leaderboard');
+
+        var ACTIVITY_TITLE = document.getElementById('activity_title');
+        var SEGMENT_TITLE = document.getElementById('segment_title');
+
+
+        var BASE_URL = 'https://cjohnson.ignorelist.com:4343';
+        var METHOD = 'GET';
+        function xmlhttp (url, method, mydiv, callback) {
+            if (mydiv !== null) {
+                mydiv.innerHTML = 'Loading...';
+            }
+
+            var xhr = new XMLHttpRequest();
             xhr.open(method, url);
             xhr.onload = function () {
                 if (xhr.status === 200) {
@@ -38,12 +58,13 @@
                     console.log('error on XHR call: ', xhr.status);
                 }
             }
+            xhr.send();
         }
 
         function authPage () {
             var url = BASE_URL + '/auth';
             
-            xmlhttp(url, METHOD, function (response) {
+            xmlhttp(url, METHOD, null, function (response) {
                 var authUrl = response;
                 authWindow = window.open(authUrl, 'authenticate');
                 setInterval(function () {
@@ -55,19 +76,80 @@
         }
 
         function getActivities () {
-            var url = BASE_URL + '/activities';
-
-            xmlhttp(url, METHOD, function () {
-                 
+            var url = BASE_URL + '/activity';
+            xmlhttp(url, METHOD, mydiv, function (response) {
+                var parsedResponse = JSON.parse(response);
+                var activity_list = '<ul>';
+                var parsedResponseLength = parsedResponse.length;
+                for (var i = 0; i < parsedResponseLength; i++) {
+                    var activity = parsedResponse[i];
+                    activity_list += '<li onclick="getSegments(' + 
+                        activity.id  + 
+                        ')">' + 
+                        activity.name + 
+                        ' ' + 
+                        activity.start_date_local + 
+                        ' ' + 
+                        activity.distance + 
+                        '</li>';
+                }
+                activity_list += '</ul>';
+                ACTIVITIES_LIST.innerHTML = activity_list;
             });
         }
 
-        function getSegments() {
-            
+        function getSegments(activity_id) {
+            var url = BASE_URL + '/segments?activityid=' + activity_id;
+
+            xmlhttp(url, METHOD, mydiv, function (response) {
+                ACTIVITIES_LIST.innerHTML = "<button type='button' onClick='getActivities()'>Go back to Athlete Activities</button>";
+                var parsedResponse = JSON.parse(response);
+                ACTIVITY_TITLE.innerHTML = parsedResponse.name;
+                var segment_list = '<ul>';
+                var parsedResponseLength = parsedResponse.segment_efforts.length;
+                for (var i = 0; i < parsedResponseLength; i++) {
+                    var segment = parsedResponse.segment_efforts[i];
+                    segment_list += '<li onclick="leaderboard(' +
+                        segment.segment.id +
+                        ')">' +
+                        segment.segment.name +
+                        ' ' +
+                        segment.segment.distance +
+                        ' ' +
+                        segment.segment.average_grade +
+                        '</li>';
+                }
+                segment_list += '</ul>';
+                SEGMENTS_LIST.innerHTML = segment_list;
+            });
         }
 
-        function leaderboard() {
-            
+        function leaderboard(segment_id) {
+            var url = BASE_URL + '/leaderboard?segmentid=' + segment_id; 
+            xmlhttp(url, METHOD, mydiv, function (response) {
+                //  var parsedResponse = JSON.parse(response.entries);
+                var parsedResponse = JSON.parse(response);
+                var leaderboard = '<ul>';
+                var athlete_list = {};
+
+                //  Set is useless because it can't compare objects
+                //      I am just going to have the map function test for equality by storing as rank:athlete_name pairs
+                parsedResponse.map(function (entry) {
+                    athlete_list[entry.athlete_name] = { athlete_name: entry.athlete_name, rank: entry.rank };
+                });
+                //  var parsedResponseLength = parsedResponse.length;
+                
+                for (name in athlete_list) {
+                    var entry = athlete_list[name];
+                    leaderboard += '<li>' +
+                        entry.rank +
+                        '   ' + 
+                        entry.athlete_name +
+                        '</li>';
+                }
+                leaderboard += '</ul>';
+                LEADERBOARD.innerHTML = leaderboard;
+            });
         }
 
     </script>
