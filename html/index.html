@@ -7,19 +7,34 @@
         </style>
     </head>
     <body>
-        <button type='button' id='authenticate' onClick='authPage()'>Authenticate</button>
+        <div>
+            <input type='radio' name='quintiles' value=1>0-20%</input>
+            <input type='radio' name='quintiles' value=2>20-40%</input>
+            <input type='radio' name='quintiles' value=3>40-60%</input>
+            <input type='radio' name='quintiles' value=4>60-80%</input>
+            <input type='radio' name='quintiles' value=5>80-100%</input>
+        </div>
 
         <br />
-        <br />
+        <div id='authenticate'>
+            <button type='button' onClick='authPage()'>Authenticate</button>
+            <br />
+            <br />
+        </div>
 
-        <button type='button' id='activities' onClick='getActivities()'>Get Athlete Activities</button>
+        <div id='leaderboard_averages'></div>
 
-        <br />
+        <div id='activities'>
+            <button type='button' onClick='getActivities()'>Get Athlete Activities</button>
+            <br />
+        </div>
+
         <div id='activities_list'></div>
         <br />
 
         <br />
         <div>Segments List: </div><div id='activity_title'></div>
+        <br />
         <div id='segments_list'></div>
         <br />
 
@@ -27,6 +42,7 @@
         
         <br />
         <div>Leaderboard: </div><div id='segment_title'></div>
+        <br />
         <div id='segment_leaderboard'></div>
         <br />
     </body>
@@ -34,6 +50,11 @@
     <script>
 
         //  consts for DOM elements
+        var ACTIVITIES = document.getElementById('activities');
+        var AUTH = document.getElementById('authenticate');
+        var LEADERBOARD_AVERAGES = document.getElementById('leaderboard_averages');
+
+
         var ACTIVITIES_LIST = document.getElementById('activities_list');
         var SEGMENTS_LIST = document.getElementById('segments_list');
         var LEADERBOARD = document.getElementById('segment_leaderboard');
@@ -44,6 +65,56 @@
 
         var BASE_URL = 'https://cjohnson.ignorelist.com:4343';
         var METHOD = 'GET';
+
+        var QUINTILE;
+
+        var quintiles = Array.from(document.getElementsByName('quintiles'));
+        console.log(typeof quintiles, quintiles.forEach);
+        quintiles.forEach(function (node) {
+            node.addEventListener('click', function () {
+                QUINTILE = this.value;
+            })     
+        });
+
+        function getAverage (entries) {
+            //  turn leaderboard results into something useful
+            var athlete_list = {};
+
+            entries.map(function (entry) {
+                athlete_list[entry.athlete_name] = entry;
+            });
+
+            var entries = [];
+            for (name in athlete_list) {
+                entries.push(athlete_list[name]);   
+            }
+
+            hr_entries = entries.filter(function (entry) {
+                return entry.average_hr !== null;
+            });
+           
+            var hr_sum_count = averageProperty(hr_entries, 'average_hr');
+            var time_sum_count = averageProperty(hr_entries, 'elapsed_time');
+
+            //  console.log('getAverage: ', hr_sum_count, time_sum_count);
+ 
+            return {average_hr: hr_sum_count, elapsed_time: time_sum_count};
+        }
+
+        function averageProperty (rider_array, prop_to_average) {
+            var rider_count = rider_array.length;
+            var sum =  rider_array.reduce(function (cumulative, current) {
+                if (cumulative[prop_to_average] === undefined) {
+                    return cumulative + current[prop_to_average];
+                } else {
+                    return cumulative[prop_to_average] + current[prop_to_average];
+                }
+            });
+            
+            //  console.log(sum);
+            return {sum: sum, count: rider_count}
+        }
+
         function xmlhttp (url, method, mydiv, callback) {
             if (mydiv !== null) {
                 mydiv.innerHTML = 'Loading...';
@@ -70,6 +141,7 @@
                 setInterval(function () {
                     if (authWindow.location.pathname === '/callback') {
                         authWindow.close();
+                        AUTH.innerHTML = '';
                     }
                 }, 100);
             });
@@ -77,78 +149,114 @@
 
         function getActivities () {
             var url = BASE_URL + '/activity';
-            xmlhttp(url, METHOD, mydiv, function (response) {
+
+            function halp (activityid) {
+                return function () {
+                    getSegments(activityid);
+                }
+            }
+
+            xmlhttp(url, METHOD, ACTIVITIES_LIST, function (response) {
                 var parsedResponse = JSON.parse(response);
-                var activity_list = '<ul>';
+                var activity_list = document.createElement('ul');
+
                 var parsedResponseLength = parsedResponse.length;
                 for (var i = 0; i < parsedResponseLength; i++) {
                     var activity = parsedResponse[i];
-                    activity_list += '<li onclick="getSegments(' + 
-                        activity.id  + 
-                        ')">' + 
-                        activity.name + 
-                        ' ' + 
-                        activity.start_date_local + 
-                        ' ' + 
-                        activity.distance + 
-                        '</li>';
+                    var element = document.createElement('li');
+                    var node = document.createTextNode(activity.name + ' ' + activity.start_date_local + ' ' + activity.distance);
+
+                    element.addEventListener('click', halp(activity.id));
+                    element.appendChild(node);
+                    activity_list.appendChild(element);
                 }
-                activity_list += '</ul>';
-                ACTIVITIES_LIST.innerHTML = activity_list;
+
+                ACTIVITIES_LIST.appendChild(activity_list);
+                ACTIVITIES.innerHTML = '';
             });
         }
 
         function getSegments(activity_id) {
             var url = BASE_URL + '/segments?activityid=' + activity_id;
-
-            xmlhttp(url, METHOD, mydiv, function (response) {
+            xmlhttp(url, METHOD, SEGMENTS_LIST, function (response) {
                 ACTIVITIES_LIST.innerHTML = "<button type='button' onClick='getActivities()'>Go back to Athlete Activities</button>";
+
                 var parsedResponse = JSON.parse(response);
                 ACTIVITY_TITLE.innerHTML = parsedResponse.name;
-                var segment_list = '<ul>';
+
+                var segment_list = document.createElement('ul');
+
                 var parsedResponseLength = parsedResponse.segment_efforts.length;
+
+                function halp (seg, act, name, quintile) {
+                    return function () {
+                        leaderboard(seg, act, name, quintile);
+                    }
+                };
+
                 for (var i = 0; i < parsedResponseLength; i++) {
                     var segment = parsedResponse.segment_efforts[i];
-                    segment_list += '<li onclick="leaderboard(' +
-                        segment.segment.id +
-                        ')">' +
-                        segment.segment.name +
-                        ' ' +
-                        segment.segment.distance +
-                        ' ' +
-                        segment.segment.average_grade +
-                        '</li>';
+                    var element = document.createElement('li');
+                    var node = document.createTextNode(segment.segment.name + " " + segment.segment.average_grade + " " + segment.segment.distance);
+                    element.addEventListener('click', halp(segment.segment.id, activity_id, segment.segment.name, QUINTILE));
+
+                    element.appendChild(node);
+                    segment_list.appendChild(element);
                 }
-                segment_list += '</ul>';
-                SEGMENTS_LIST.innerHTML = segment_list;
+                SEGMENTS_LIST.appendChild(segment_list);
             });
         }
 
-        function leaderboard(segment_id) {
-            var url = BASE_URL + '/leaderboard?segmentid=' + segment_id; 
-            xmlhttp(url, METHOD, mydiv, function (response) {
-                //  var parsedResponse = JSON.parse(response.entries);
-                var parsedResponse = JSON.parse(response);
-                var leaderboard = '<ul>';
-                var athlete_list = {};
+        function leaderboard(segment_id, activity_id, segment_name, quintile_to_return) {
+            //  console.log('in leaderboard function: ', segment_id, activity_id);
 
-                //  Set is useless because it can't compare objects
-                //      I am just going to have the map function test for equality by storing as rank:athlete_name pairs
-                parsedResponse.map(function (entry) {
+            var url = BASE_URL + '/leaderboard?segmentid=' + segment_id + '&quintile=' + quintile_to_return; 
+            SEGMENTS_LIST.innerHTML = "<button onClick='getSegments(" + activity_id + ")'>Go back to Segments List</button>";
+            xmlhttp(url, METHOD, LEADERBOARD, function (response) {
+                var parsedResponse = JSON.parse(response);
+                var user_ride_stats = parsedResponse.user_ride;
+                var user_efforts_overall = parsedResponse.user_overall;
+
+
+                //  debugging
+                //  console.log('user_ride_stats: ', user_ride_stats);
+
+                var athlete_list = {};
+                var leaderboard = document.createElement('ul');
+
+                raw_data = getAverage(parsedResponse.entries);
+                //  console.log(raw_data);
+
+                LEADERBOARD_AVERAGES.innerHTML = "average HR: " + 
+                    raw_data.average_hr.sum/raw_data.average_hr.count + 
+                    "<br />average elapsed time (minutes:seconds): " + 
+                    Math.floor((raw_data.elapsed_time.sum/raw_data.elapsed_time.count)/60) + 
+                    ":" + 
+                    Math.floor((raw_data.elapsed_time.sum / raw_data.elapsed_time.count) % 60) + 
+                    "<br /><br />Your average HR: " +
+                    user_ride_stats.average_hr +
+                    "<br />Your elapsed time: " +
+                    Math.floor(user_ride_stats.elapsed_time/60) +
+                    ":" +
+                    Math.floor(user_ride_stats.elapsed_time % 60) +
+                    "<br /><br />";
+
+                SEGMENT_TITLE.innerHTML = segment_name;
+
+                parsedResponse.entries.map(function (entry) {
                     athlete_list[entry.athlete_name] = { athlete_name: entry.athlete_name, rank: entry.rank };
                 });
-                //  var parsedResponseLength = parsedResponse.length;
                 
                 for (name in athlete_list) {
                     var entry = athlete_list[name];
-                    leaderboard += '<li>' +
-                        entry.rank +
-                        '   ' + 
-                        entry.athlete_name +
-                        '</li>';
+                    var element = document.createElement('li');
+                    var node = document.createTextNode(entry.rank + ' ' + entry.athlete_name);
+
+                    element.appendChild(node);
+                    leaderboard.appendChild(element);
                 }
-                leaderboard += '</ul>';
-                LEADERBOARD.innerHTML = leaderboard;
+                LEADERBOARD.removeChild(LEADERBOARD.firstChild);
+                LEADERBOARD.appendChild(leaderboard);
             });
         }
 
