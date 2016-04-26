@@ -208,6 +208,9 @@
         }
 
         function leaderboard(segment_id, activity_id, segment_name, quintile_to_return) {
+            //  change leaderboard XHR function so that it can receive multiple responses and do the appropriate things with them
+
+
             //  console.log('in leaderboard function: ', segment_id, activity_id);
 
             var url = BASE_URL + '/leaderboard?segmentid=' + segment_id + '&quintile=' + quintile_to_return; 
