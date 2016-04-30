@@ -82,6 +82,7 @@ function getUserStatsForSegment (parameters, callback) {
     });
 }
 
+//  see the version that's in the leaderboard route*********************
 function sentAll (sent) {
     if (sent === 3) {
         console.log('sending end');
@@ -92,5 +93,5 @@ function sentAll (sent) {
 module.exports = {
     getUserStatsForSegment: getUserStatsForSegment,
     getLeaderboardForSegment: getLeaderboardForSegment,
-    sentAll: sentAll 
+    sentAll: sentAll,
 }

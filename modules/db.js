@@ -2,7 +2,10 @@
 //  var DbObject = require('./objectHelper.js').DbObject;
 
 class DbClass {
-    var DB;
+    constructor () {
+        this.DB;
+    }
+
     getDb () {
         var that = this;
         var mongo = require('mongodb');
@@ -90,13 +93,11 @@ class DbClass {
 
     //  all error checking is handled here
     _dbResponseHanlder (err, payload, callback) {
-            if (err) {
-                console.log('error querying DB: ', err);
-            } else {
-                callback(payload);   
-            }
-        });
-
+        if (err) {
+            console.log('error querying DB: ', err);
+        } else {
+            callback(payload);   
+        }
     }
 }
 
