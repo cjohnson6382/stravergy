@@ -7,7 +7,7 @@ function sendAll (done, response_object, res) {
     }
 } 
 
-router.get('/leaderboard', function (req, res) {
+router.get('/', function (req, res) {
     var segmentid = parseInt(req.query.segmentid, 10);
     req.sessionDb.set(req.query.sessionid, {segmentid: segmentid});
     var quintile;

@@ -1,4 +1,4 @@
-//  all the db stuff is fucked up and too complicated; simplify all of this
+fs = require('fs');
 
 function generateSessionId (callback) {
     var crypto = require('crypto');
@@ -17,6 +17,19 @@ function generateSessionId (callback) {
     hash.end();
 }
 
+function getCredentials (callback) {
+    fs.readFile('./data/strava_config', function (err, payload) {
+        //  console.log('strava_config file after opening: ', JSON.parse(payload.toString('utf8')).client_id);
+        if (err === null) {
+            callback(JSON.parse(payload.toString('utf8'))); 
+        } else {
+            console.log('error opening credentials file: ', err);
+            return;
+        }   
+    }); 
+}
+
 module.exports = {
+    getCredentials: getCredentials,
     generateSessionId: generateSessionId
 };

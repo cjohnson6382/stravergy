@@ -1,20 +1,25 @@
 var express = require('express');
 var router = express.Router();
+var util = require('../modules/util.js');
+var strava = require('strava-v3');
 
-router.get('/auth', function (req, res) {
-    //  console.log('auth called');
-    console.log('credentials retrieved from file: ', credentials, '\ncallback: ', credentials.redirect_uri);
-    res.writeHead(200, {'Access-Control-Allow-Origin': '*'});
+var stravaScopes = 'view_private';
 
-    var sessionid = util.generateSesionId();
-
-    var url = strava.oauth.getRequestAccessURL({
-        client_id: credentials.client_id,
-        redirect_uri: credentials.redirect_uri,
-        scope: stravaScopes,
-        response_type: 'code'
-    })
-    res.end({url: url, sessionid: sessionid});
+router.get('/', function (req, res) {
+    util.getCredentials(function (credentials) {
+        console.log('credentials retrieved from file: ', credentials);
+        res.writeHead(200, {'Access-Control-Allow-Origin': '*'});
+    
+        util.generateSessionId(function (sessionid) {
+            var url = strava.oauth.getRequestAccessURL({
+                client_id: credentials.client_id,
+                redirect_uri: credentials.redirect_uri,
+                scope: stravaScopes,
+                response_type: 'code'
+            })
+            res.end(JSON.stringify({url: url, sessionid: sessionid}));
+        });
+    });
 });
 
 module.exports = router;

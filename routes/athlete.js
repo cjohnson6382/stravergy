@@ -1,7 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
-router.get('/athlete', function (req, res) {
+router.get('/', function (req, res) {
     strava.athlete.get({ access_token: access_token }, function (err, payload) {
         if (err === null) {
             console.log('athlete ID: ', payload.id);

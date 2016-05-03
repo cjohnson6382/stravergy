@@ -2,7 +2,7 @@
 
 //  IMPORTS
     //  utility modules
-var fs = require('fs');
+//  var fs = require('fs');
 var async = require('async');
 var express = require('express');
 //  var multer = require('multer');
@@ -14,7 +14,7 @@ var https = require('https');
 //  var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
         //  main APIs
-var google = require('googleapis');
+//  var google = require('googleapis');
 var strava = require('strava-v3');
 
     //  local modules
@@ -30,6 +30,7 @@ var activity = require('./routes/activity.js');
 var segment = require('./routes/segment.js');
 var leaderboard = require('./routes/leaderboard.js');
 var includes = require('./routes/includes.js');
+var stubs = require('./routes/stubs.js');
 /*
 var OAuth2 = google.auth.OAuth2;
 var googleScopes = [
@@ -37,7 +38,7 @@ var googleScopes = [
 ];
 */
 
-var stravaScopes = 'view_private';
+//  var stravaScopes = 'view_private';
 //  strava.<api endpoint>.<api endpoint option>(args,callback)
 
 var app = express();
@@ -49,42 +50,32 @@ var dbMiddleware = function (req, res, next) {
 
 app.use(dbMiddleware);
 
-//  OAuth
-async.waterfall([
-    function (callback) {
-        fs.readFile('data/strava_config', function (err, payload) {
-            //  console.log('strava_config file after opening: ', JSON.parse(payload.toString('utf8')).client_id);
-            if (err === null) {
-                callback(null, JSON.parse(payload.toString('utf8'))); 
-            } else {
-                console.log('error opening credentials file: ', err);
-                return;
-            }
-        });
-    },
-//  Routes
-    function (credentials, callback) {
-        app.use('/', root);
-        app.use('/auth', auth);
-        app.use('/callback', callback);
-        app.use('/athlete', athlete);
-        app.use('/activity', activity);
-        app.use('/segment', segment);
-        app.use('/leaderboard', leaderboard);
-        app.use('/includes', includes);
+var routes = [
+    app.use('/', root),
+    app.use('/auth', auth),
+    app.use('/callback', callback),
+    app.use('/athlete', athlete),
+    app.use('/activity', activity),
+    app.use('/segment', segment),
+    app.use('/leaderboard', leaderboard),
+    app.use('/includes', includes),
+    app.use('/stubs', stubs),
+];
 
-        callback();
-    }
-], function (err, results) {
-    if (err === null) {
-        var options = {
-            key: fs.readFileSync('ssl/key.pem'),
-            cert: fs.readFileSync('ssl/cert.pem')
-        };
+var promise = Promise.all(routes);
+
+promise.then(function () {
+    var options = {
+        key: fs.readFileSync('ssl/key.pem'),
+        cert: fs.readFileSync('ssl/cert.pem')
+    };
+
+    try {
         https.createServer(options, app).listen(443, function () {
             console.log('starting the server in HTTPS mode');
         });
-    } else {
-        console.log('error starting the server: ', err);
+    } catch (e) {
+        console.log('error starting server: ', e);
     }
+
 });

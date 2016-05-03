@@ -1,7 +1,9 @@
 <html ng-app='stravaApp'>
     <head>
         <!-- the stupid Google URL works, but my local stuff doesn't -->
+        <script type='text/javascript' src='./includes/ui-bootstrap-tpls-1.3.2.min.js'></script>
         <script type='text/javascript' src='./includes/angular.min.js'></script>
+        <script type='text/javascript' src='./includes/angular-animate.js'></script>
         <script type='text/javascript' src='./includes/util.js'></script>
         <script type='text/javascript' src='./includes/stravegy.js'></script>
         <script type='text/javascript' src='./includes/quintileCtrl.js'></script>
@@ -12,6 +14,9 @@
         <script type='text/javascript' src='./includes/dataService.js'></script>
         <script type='text/javascript' src='./includes/sessionService.js'></script>
         <script type='text/javascript' src='./includes/authCtrl.js'></script>
+        <script type='text/javascript' src='./includes/authPageInstanceCtrl.js'></script>
+
+        <link rel='stylesheet' type='text/css' href='./includes/bootstrap.min.css'></link>
     </head>
 
     <body>
@@ -28,10 +33,10 @@
         <div>
             <!-- angular is going to check whether you are authorized
                 and if not it will send you to an auth page -->
-            <div id='auth' ng-controller='AuthCtrl'>
+            <div id='auth' ng-show='authvisible()' ng-controller='AuthCtrl'>
                 <p>First, click the following button to authenticate
                 so that we can access your information:</p>
-                <button ng-click='$scope.authenticate()'>Authenticate</button> 
+                <button ng-click='authenticate()'>Authenticate</button> 
             </div>
             
             <br />
@@ -53,7 +58,8 @@
                 </div>
             </div> 
 
-            <div id='activities' ng-controller='ActivityCtrl'>
+            <div id='activities' ng-show='activitiesVisible()' ng-controller='ActivityCtrl'>
+                <button ng-click='go()' >Get your activities</button>
                 <div id='activity_list'>
                     <ul>
                         <li ng-repeat='activity in activities'>
