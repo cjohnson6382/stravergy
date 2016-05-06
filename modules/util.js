@@ -9,7 +9,7 @@ function generateSessionId (callback) {
     hash.on('readable', () => {
         var hashed = hash.read();
         if (hashed) {
-            console.log('hashed your data', hashed.toString('hex'));
+            //  console.log('hashed your data', hashed.toString('hex'));
             callback(hashed.toString('hex'));
         }   
     }); 
@@ -19,7 +19,6 @@ function generateSessionId (callback) {
 
 function getCredentials (callback) {
     fs.readFile('./data/strava_config', function (err, payload) {
-        //  console.log('strava_config file after opening: ', JSON.parse(payload.toString('utf8')).client_id);
         if (err === null) {
             callback(JSON.parse(payload.toString('utf8'))); 
         } else {

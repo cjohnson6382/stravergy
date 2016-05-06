@@ -1,10 +1,10 @@
+var strava = require('strava-v3');
+
 function _getQuintile (leaderboard_entries) {
-    console.log('leaderboard_entries/5: ', Math.ceil(leaderboard_entries/5));
     return Math.ceil(leaderboard_entries/5);
 }
 
 function _getPageRange(quintile, quintile_size) {
-    console.log('total_entries/quintile_size/quintile: ', total_entries, quintile_size, quintile);
     return {
         //  quintile * quintile_size is the LAST entry you should get
         //  quintile-1*quintile is the FIRST entry you should get
@@ -19,25 +19,31 @@ function _getRemainderLeaderboard(parameters, bounds, callback) {
     var start = bounds.start;
     var end = bounds.end;
 
+    var done = end-start;
+    var count = 0;
+
     //  looping calls to get the parts of the leaderboard you want
     for (var i = start + 1; i < end + 1; i++) {
         parameters.page = i;
         strava.segments.listLeaderboard(parameters, function (err, payload) {
-            var entries = payload.entries.slice(0, payload.entries.length - 6);
             if (err === null) {
-                //  concat each call onto the leaderboard_entries which is ultimately returned to client
+                var entries = payload.entries.slice(0, payload.entries.length - 6);
+                //  concat each call onto the leaderboard_entries 
                 leaderboard_entries = leaderboard_entries.concat(entries);
                 count++;
-                console.log('count/pages', count, pages);
-                if (count === pages) {
-                    callback(leaderboard_entries);
+                if (count === done) {
+                    sendLeaderboardEntries(leaderboard_entries, callback);
                 }
-            } else {
+           } else {
                 console.log('error retrieving full loaderboard: ', err);
             }
         });
     }
 };
+
+function sendLeaderboardEntries (leaderboard_entries, callback) {
+    callback(leaderboard_entries);
+}
 
 function getLeaderboardForSegment (parameters, quintile, callback) {
     parameters.per_page = 1;
@@ -51,7 +57,7 @@ function getLeaderboardForSegment (parameters, quintile, callback) {
             var total_entries = payload.entry_count;
             var start_end;
 
-            if (quintile) {
+            if (0 < quintile && quintile < 6) {
                 start_end = _getPageRange(quintile, _getQuintile(total_entries));
             } else {
                 start_end = {start: 1, end: Math.ceil(total_entries/200)};
@@ -60,7 +66,7 @@ function getLeaderboardForSegment (parameters, quintile, callback) {
             parameters.per_page = 200;
 
             _getRemainderLeaderboard(parameters, start_end, function (leaderboard) {
-                console.log('leaderboard_entries length before end: ', leaderboard.length);
+                //  console.log('callback for _getRemainderLeaderboard: ', leaderboard.length);
                 callback(ride, leaderboard);
             });
 
@@ -74,19 +80,20 @@ function getUserStatsForSegment (parameters, callback) {
     strava.segments.listEfforts(parameters, function (err, payload) {
         if (err === null) {
             //  payload is an array of segment effort objects
+            console.log('listEfforts call in modules/leaderboard.js: ', payload.length);
             callback(payload);
         } else {
             console.log('error getting athlete efforts for segment', err);
         }
-        callback(payload);
     });
 }
 
 //  see the version that's in the leaderboard route*********************
-function sentAll (sent) {
-    if (sent === 3) {
-        console.log('sending end');
-        res.end('end transmission');
+function sentAll (sent, response_object, res) {
+    if (sent === 2) {
+        console.log('sending end', sent);
+        //  console.log('data being sent to client from leaderboard server: ', response_object);
+        res.end(JSON.stringify(response_object));
     }
 }
 

@@ -8,7 +8,8 @@ var express = require('express');
 //  var multer = require('multer');
 //  var bodyParser = require('body-parser');
 var https = require('https');
-
+var session = require('express-session');
+var MongoStore = require('connect-mongo')(session);
         //  for handling POST requests
 //  var upload = multer({ dest: 'uploads/' });
 //  var urlencodedParser = bodyParser.urlencoded({ extended: false });
@@ -21,16 +22,6 @@ var strava = require('strava-v3');
 var db = require('./modules/db.js');
 var leaderboard = require('./modules/leaderboard.js');
 
-        //  routes
-var root = require('./routes/root.js');
-var auth = require('./routes/auth.js');
-var callback = require('./routes/callback.js');
-var athlete = require('./routes/athlete.js');
-var activity = require('./routes/activity.js');
-var segment = require('./routes/segment.js');
-var leaderboard = require('./routes/leaderboard.js');
-var includes = require('./routes/includes.js');
-var stubs = require('./routes/stubs.js');
 /*
 var OAuth2 = google.auth.OAuth2;
 var googleScopes = [
@@ -42,13 +33,39 @@ var googleScopes = [
 //  strava.<api endpoint>.<api endpoint option>(args,callback)
 
 var app = express();
+/*
 var sessionDb = new db.DbClass();
 var dbMiddleware = function (req, res, next) {
     req.sessionDb = sessionDb;
     next();
 }
+*/
 
-app.use(dbMiddleware);
+//  middleware
+app.use(session({
+    genid: function () {
+        return genuuid();
+    },
+    secret: 'stravacalafragalisticexpaladocious',
+    name: 'stravegy.sid',
+    store: new MongoStore({ url: 'mongodb://localhost:27017/stravegy' }),
+    ttl: 60 * 30
+}));
+//  app.use(dbMiddleware);
+
+
+//  routes
+var root = require('./routes/root.js');
+var auth = require('./routes/auth.js');
+var callback = require('./routes/callback.js');
+var athlete = require('./routes/athlete.js');
+var activity = require('./routes/activity.js');
+var segment = require('./routes/segment.js');
+var leaderboard = require('./routes/leaderboard.js');
+
+var includes = require('./routes/includes.js');
+var stubs = require('./routes/stubs.js');
+var resources = require('./routes/resources.js');
 
 var routes = [
     app.use('/', root),
@@ -60,6 +77,7 @@ var routes = [
     app.use('/leaderboard', leaderboard),
     app.use('/includes', includes),
     app.use('/stubs', stubs),
+    app.use('/resources', resources),
 ];
 
 var promise = Promise.all(routes);

@@ -1,5 +1,7 @@
 var express = require('express');
+var leaderboard_helper = require('../modules/leaderboard.js');
 var router = express.Router();
+var strava = require('strava-v3');
 
 function sendAll (done, response_object, res) {
     if (done === 2) {
@@ -9,12 +11,13 @@ function sendAll (done, response_object, res) {
 
 router.get('/', function (req, res) {
     var segmentid = parseInt(req.query.segmentid, 10);
-    req.sessionDb.set(req.query.sessionid, {segmentid: segmentid});
+    req.sessionDb.set(req.query.sessionid, { segmentid: segmentid }, function (payload) {
+        console.log('', payload);
+    });
     var quintile;
     //  implement this on the client side!!!!
     //      the client is supposed to validate input
     if (0 < req.query.quintile < 6) {
-        console.log('Quintile requeted: ', req.query.quintile);
         quintile = req.query.quintile;
     }
 
@@ -22,31 +25,36 @@ router.get('/', function (req, res) {
         access_token: access_token,
         id: segmentid,
         context_entries: 2,
-        //  atheleteid: athleteid,
     };
 
     var done = 0;
     var response_object = {};
 
-    getLeaderboardForSegment(leaderboard_parameters, quintile, function (ride, leaderboard) {
+    leaderboard_helper.getLeaderboardForSegment(leaderboard_parameters, quintile, function (ride, leaderboard) {
+        //  console.log('routes/leaderbard.js getLeaderboardForSegment callback: ', leaderboard);
+        //  console.log('ride in leaderbard.js getLeaderboardForSegment callback: ', ride);
+
         response_object['leaderboard'] = leaderboard;
-        done++;
         response_object['ride'] = ride
-        console.log('send leaderboard and ride data');
-        sendAll(done, response_array, res);
+        done++;
+        console.log('leaderboard and ride data');
+        sendAll(done, response_object, res);
     });
 
-    req.sessionDb.get(req.query.sessionid, 'athleteid', function (athleteid) {
+    req.sessionDb.get(req.query.sessionid, 'athlete', function (athleteid) {
+        console.log('routes/leaderboard: db response, getting athleteid: ', athleteid);
         var user_parameters = {
-            athleteid: athleteid,
+            athlete_id: athleteid,
+            id: segmentid,
             access_token: access_token
         };
 
-        getUserStatsForSegment(user_parameters, function (user) {
-            response_object['user'] = user
+        leaderboard_helper.getUserStatsForSegment(user_parameters, function (user) {
+            console.log('\n\nin leaderboard.js, getUserStatsForSegment callback: ', user.length);
+            response_object['user'] = user;
             done++;
-            console.log('send user data');
-            sendAll(done, response_array, res);
+            console.log('user data');
+            leaderboard_helper.sentAll(done, response_object, res);
         });
     });
 });

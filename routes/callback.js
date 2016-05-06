@@ -1,15 +1,19 @@
 var express = require('express');
 var router = express.Router();
 var strava = require('strava-v3');
+var util = require('../modules/util.js');
 
 router.get('/', function (req, res) {
-    //  console.log('in callback: ', req.query.code);
     strava.oauth.getToken(req.query.code, function (err, payload) {
         if (err === null) {
-            //  console.log('access token payload: ', payload);
             access_token = payload.access_token;
-            req.sessionDb.set(req.query.sessionid, {access_token: access_token, athelete: access_token.athlete}, function () {
-                res.end('authentication successful!');
+
+            util.generateSessionId(function (sessionid) {
+                req.sessionDb.set(sessionid, { sessionid: sessionid, access_token: access_token, athlete: payload.athlete }, function (payload) {
+                    //  console.log('in routes/auth: sessionid inserted into db: ', payload);
+                    console.log('in routes/callback: sessionid inserted into db');
+                    res.end(JSON.stringify('authentication successful'));
+                }); 
             });
         } else {
             console.log('error getting token: ', err);
