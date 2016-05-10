@@ -2,7 +2,13 @@
     <head>
         <style>
             li:hover {
-                background-color: yellow
+                background-color: lightblue
+            }
+            body {
+                padding: 30px 30px 30px 30px
+            }
+            button {
+                padding: 5px 5px 5px 5px
             }
         </style>
 
@@ -20,37 +26,42 @@
         <script type='text/javascript' src='./includes/dataAggregationCtrl.js'></script>
         <script type='text/javascript' src='./includes/dataService.js'></script>
         <script type='text/javascript' src='./includes/authCtrl.js'></script>
-        <script type='text/javascript' src='./includes/authPageInstanceCtrl.js'></script>
+        <script type='text/javascript' src='./includes/progressCtrl.js'></script>
 
         <script type='text/javascript' src='./includes/sessionService.js'></script>
         <script type='text/javascript' src='./includes/flowControlService.js'></script>
+        <script type='text/javascript' src='./includes/progressService.js'></script>
 
         <link rel='stylesheet' type='text/css' href='./includes/bootstrap.min.css'></link>
     </head>
 
     <body>
-        <h1>Stravegy</h1>
-        <p><b>
-            See how your heart rate affects your time on different segments! 
-            Heart rate is one indication of how hard you are working on a segment. 
-            Find a segment that you worked really hard on, and compare yourself to
-            different quntiles of Strava users who also wore heart rate monitors. 
-            If you worked hard on one segment and fell in the top 20% of the leaderboard, 
-            but you barely tried on another and still fell into the top 20%, then you can 
-            probably do better on that segment.
-        </b></p>
+        <div class='jumbotron'>
+            <div class='container'>
+                <h2>Stravegy</h2>
+                <p>
+                    See how your heart rate affects your time on different segments! 
+                    Heart rate is one indication of how hard you are working. Find a segment where 
+                    you worked really hard and compare yourself results to the segment's leaderboard.
+                    The results only include Strava users who also wore heart rate monitors. 
+
+                    If you barely tried on a segment and still beat the average, then go do better!
+                </p>
+            </div>
+        </div>
         <div>
             <div id='auth' ng-show='authvisible()' ng-controller='AuthCtrl'>
-                <p>First, click the following button to authenticate
-                so that we can access your information:</p>
+                <p class="alert alert-info">First, click the following button to authenticate
+                    so that we can access your information:</p>
                 <input type='image' src='./resources/ConnectWithStrava.png' ng-click='authenticate()' /> 
             </div>
-            
             <br />
 
+            <div ng-show='loadingvisible()' ng-controller='ProgressCtrl'><uib-progressbar class="progress-striped active" value="dynamic" ><i>Strava needs more EPO</i></uib-progressbar></div>
             <div ng-show='datavisible()' ng-controller='DataAggregationCtrl'>
                 <span>Activity Name: </span><span><b>{{ activity }}</b></span><br />
                 <span>Segment Name: </span><span><i>{{ segment }}</i></span><br />
+                <br />
                 <span>Ride Time: </span>
                 <span>{{ ride.elapsed_time }}</span><br />
                 <span>Ride HR: </span>
@@ -62,7 +73,6 @@
                 <span>{{ leaderboard.average_hr }}</span><br />
                 <br />
                 <br />
-                <!--    <span ng-show='false'>{{ efforts_hr }}</span>   -->
             </div>
 
 <!--            
@@ -79,7 +89,7 @@
             </div> 
 -->
             <div id='activities' ng-show='activitiesVisible()' ng-controller='ActivityCtrl'>
-                <button ng-click='go()' >Get your activities</button>
+                <button class='btn btn-lg btn-primary' ng-click='go()' >Get your activities</button>
                 <div id='activity_list'>
                     <ul>
                         <li ng-repeat='activity in activities'>
