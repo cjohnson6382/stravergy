@@ -1,5 +1,6 @@
 fs = require('fs');
 
+/*
 function generateSessionId (callback) {
     var crypto = require('crypto');
     var hash = crypto.createHash('md5');
@@ -16,7 +17,7 @@ function generateSessionId (callback) {
     hash.write(data.toString());
     hash.end();
 }
-
+*/
 function getCredentials (callback) {
     fs.readFile('./data/strava_config', function (err, payload) {
         if (err === null) {
@@ -30,5 +31,5 @@ function getCredentials (callback) {
 
 module.exports = {
     getCredentials: getCredentials,
-    generateSessionId: generateSessionId
+//    generateSessionId: generateSessionId
 };

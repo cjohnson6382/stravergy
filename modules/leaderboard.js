@@ -76,29 +76,31 @@ function getLeaderboardForSegment (parameters, quintile, callback) {
     });
 }
 
+/*
 function getUserStatsForSegment (parameters, callback) {
-    strava.segments.listEfforts(parameters, function (err, payload) {
+    strava.segmentEfforts.get(parameters, function (err, payload) {
         if (err === null) {
             //  payload is an array of segment effort objects
-            console.log('listEfforts call in modules/leaderboard.js: ', payload.length);
             callback(payload);
         } else {
             console.log('error getting athlete efforts for segment', err);
         }
     });
 }
+*/
 
-//  see the version that's in the leaderboard route*********************
-function sentAll (sent, response_object, res) {
+/*
+function sendAll (sent, response_object, res) {
     if (sent === 2) {
         console.log('sending end', sent);
         //  console.log('data being sent to client from leaderboard server: ', response_object);
         res.end(JSON.stringify(response_object));
     }
 }
+*/
 
 module.exports = {
-    getUserStatsForSegment: getUserStatsForSegment,
+    //  getUserStatsForSegment: getUserStatsForSegment,
     getLeaderboardForSegment: getLeaderboardForSegment,
-    sentAll: sentAll,
+    //  sendAll: sendAll,
 }

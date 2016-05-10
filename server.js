@@ -41,6 +41,17 @@ var dbMiddleware = function (req, res, next) {
 }
 */
 
+
+function genuuid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
 //  middleware
 app.use(session({
     genid: function () {
@@ -48,8 +59,11 @@ app.use(session({
     },
     secret: 'stravacalafragalisticexpaladocious',
     name: 'stravegy.sid',
-    store: new MongoStore({ url: 'mongodb://localhost:27017/stravegy' }),
-    ttl: 60 * 30
+    //  store: new MongoStore({ url: 'mongodb://localhost:27017/stravegy' }),
+    store: new MongoStore({ url: 'mongodb://localhost/stravegy' }),
+    ttl: 60 * 30,
+    resave: true,
+    saveUninitialized: true
 }));
 //  app.use(dbMiddleware);
 
