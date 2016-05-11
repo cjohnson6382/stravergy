@@ -36,9 +36,7 @@
     </head>
 
     <body>
-        <table>
-            <h2>Stravegy</h2>
-        </table>
+        <span><h2>Stravegy</h2><img src='./resources/bg.jpeg'></img></span>
         <p>
             See how your heart rate affects your time on different segments! 
             Heart rate is one indication of how hard you are working. Find a segment where 
@@ -73,6 +71,19 @@
                 <br />
             </div>
 
+<!--            
+            <div id='quintiles' ng-controller='QuintileCtrl'>
+                <div>Choose a segment of the leaderboard to compare yourself with:</div>
+                <div id='quintile_selected' ng-show='false'>{{ quintile.value }}</div>
+                <div id='quintile_buttons' ng-show='true'>
+                    <input type='radio' name='quintiles' ng-model='quintile.value' value=1>0-20%</input>
+                    <input type='radio' name='quintiles' ng-model='quintile.value' value=2>20-40%</input>
+                    <input type='radio' name='quintiles' ng-model='quintile.value' value=3>40-60%</input>
+                    <input type='radio' name='quintiles' ng-model='quintile.value' value=4>60-80%</input>
+                    <input type='radio' name='quintiles' ng-model='quintile.value 'value=5>80-100%</input>
+                </div>
+            </div> 
+-->
             <div id='activities' ng-show='activitiesVisible()' ng-controller='ActivityCtrl'>
                 <button class='btn btn-lg btn-primary' ng-click='go()' >Get your activities</button>
                 <div id='activity_list'>
@@ -97,6 +108,7 @@
                                <span><b>{{ segment.name }}</b></span>
                                <span>{{ metersToMiles(segment.segment.distance) + " Miles" }}</span>
                                <span>{{ segment.segment.average_grade + "% Avg. Grade" }}</span>
+                               <!--<span>{{ metersToFeet(segment.total_elevation_gain) + " Total Elevation"}}</span>-->
                             </div>
                         </li>
                     </ul>
@@ -104,6 +116,18 @@
             </div>
 
             <div id='leaderboard' ng-controller='LeaderboardCtrl'>
+<!--
+                <div id='leaderboard_list'>
+                    <ul>
+                        <li ng-repeat='entry in leaderobard'>
+                            <span>{{ entry.athlete_name }}</span>
+                            <span>{{ secondsToFormattedTime(entry.elapsed_time) }}</span>
+                            <span>{{ entry.average_hr }}</span>
+                            <span>{{ entry.average_watts }}</span>
+                        </li>
+                    </ul>
+                </div>
+-->
             </div>
         </div>
     </body>

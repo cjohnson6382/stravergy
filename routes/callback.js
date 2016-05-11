@@ -7,7 +7,6 @@ router.get('/', function (req, res) {
         if (err === null) {
             req.session.access_token = payload.access_token;
             req.session.athlete = payload.athlete.id;
-            res.end('authentication successful');
         } else {
             console.log('error getting token: ', err);
         }

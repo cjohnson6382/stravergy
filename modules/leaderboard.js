@@ -66,7 +66,6 @@ function getLeaderboardForSegment (parameters, quintile, callback) {
             parameters.per_page = 200;
 
             _getRemainderLeaderboard(parameters, start_end, function (leaderboard) {
-                //  console.log('callback for _getRemainderLeaderboard: ', leaderboard.length);
                 callback(ride, leaderboard);
             });
 
@@ -76,31 +75,6 @@ function getLeaderboardForSegment (parameters, quintile, callback) {
     });
 }
 
-/*
-function getUserStatsForSegment (parameters, callback) {
-    strava.segmentEfforts.get(parameters, function (err, payload) {
-        if (err === null) {
-            //  payload is an array of segment effort objects
-            callback(payload);
-        } else {
-            console.log('error getting athlete efforts for segment', err);
-        }
-    });
-}
-*/
-
-/*
-function sendAll (sent, response_object, res) {
-    if (sent === 2) {
-        console.log('sending end', sent);
-        //  console.log('data being sent to client from leaderboard server: ', response_object);
-        res.end(JSON.stringify(response_object));
-    }
-}
-*/
-
 module.exports = {
-    //  getUserStatsForSegment: getUserStatsForSegment,
     getLeaderboardForSegment: getLeaderboardForSegment,
-    //  sendAll: sendAll,
 }

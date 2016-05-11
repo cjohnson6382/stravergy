@@ -1,46 +1,15 @@
 'use strict';
 
 //  IMPORTS
-    //  utility modules
-//  var fs = require('fs');
 var async = require('async');
 var express = require('express');
-//  var multer = require('multer');
-//  var bodyParser = require('body-parser');
 var https = require('https');
 var session = require('express-session');
 var MongoStore = require('connect-mongo')(session);
-        //  for handling POST requests
-//  var upload = multer({ dest: 'uploads/' });
-//  var urlencodedParser = bodyParser.urlencoded({ extended: false });
 
-        //  main APIs
-//  var google = require('googleapis');
-var strava = require('strava-v3');
-
-    //  local modules
-var db = require('./modules/db.js');
-var leaderboard = require('./modules/leaderboard.js');
-
-/*
-var OAuth2 = google.auth.OAuth2;
-var googleScopes = [
-    //  google scopes used
-];
-*/
-
-//  var stravaScopes = 'view_private';
 //  strava.<api endpoint>.<api endpoint option>(args,callback)
 
 var app = express();
-/*
-var sessionDb = new db.DbClass();
-var dbMiddleware = function (req, res, next) {
-    req.sessionDb = sessionDb;
-    next();
-}
-*/
-
 
 function genuuid() {
   function s4() {
@@ -65,8 +34,6 @@ app.use(session({
     resave: true,
     saveUninitialized: true
 }));
-//  app.use(dbMiddleware);
-
 
 //  routes
 var root = require('./routes/root.js');
