@@ -6,6 +6,7 @@ var strava = require('strava-v3');
 var stravaScopes = 'view_private';
 
 router.get('/', function (req, res) {
+    console.log('authenticating');
     util.getCredentials(function (credentials) {
         res.writeHead(200, {'Access-Control-Allow-Origin': '*'});
         var url = strava.oauth.getRequestAccessURL({
