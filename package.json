@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "author": "Christopher Johnson <cjohnson6382@gmail.com>",
+  "description": "testing serverside code with mocha",
+  "scripts": {
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
+  "dependencies": {
+    "chai": "~1.4.2",
+    "mocha": "*",
+    "mocha-sinon": "^1.1.5",
+    "sinon": "^1.17.4"
+  },
+  "engines": {
+    "node": ">=0.8"
+  }
+}
